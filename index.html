@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>GM Path – 1400 ao GM</title>
+<meta name="theme-color" content="#0f172a">
+<link id="manifestLink" rel="manifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{color-scheme:dark}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;background:#020617}
+.white-1e1d7{background:#e2e8f0!important}
+.black-3c85d{background:#1e293b!important}
+.board-wrap{width:100%;max-width:420px;margin:0 auto}
+.nav-btn{transition:all .2s}
+.nav-btn.active{color:#f59e0b;transform:translateY(-2px)}
+.scrollbar-hide::-webkit-scrollbar{display:none}
+.card{background:rgba(30,41,59,.7);backdrop-filter:blur(12px);border:1px solid rgba(148,163,184,.1)}
+.blind .piece-417db{opacity:0!important}
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 selection:bg-amber-500/30">
+<div id="app" class="min-h-screen flex flex-col max-w-[960px] mx-auto">
+  <!-- HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur border-b border-slate-800">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-500/20 grid place-items-center border border-amber-500/30">
+          <span class="text-xl">♞</span>
+        </div>
+        <div>
+          <h1 class="font-extrabold leading-none tracking-tight">GM Path</h1>
+          <p class="text-[11px] text-slate-400 -mt-0.5">1400 → GM</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-sm">
+          <span class="text-slate-400 mr-1">Rating</span>
+          <span id="ratingBadge" class="font-bold text-amber-400">1400</span>
+        </div>
+        <button id="installBtn" class="hidden px-3 py-1.5 rounded-lg bg-amber-500 text-slate-900 text-sm font-semibold hover:bg-amber-400">Instalar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 px-4 pb-28 pt-4">
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="space-y-4">
+      <div class="card rounded-2xl p-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold">Sua jornada</h2>
+          <button id="editRating" class="text-xs text-amber-400 hover:underline">editar rating</button>
+        </div>
+        <div class="mt-4">
+          <div class="flex justify-between text-xs text-slate-400 mb-1"><span>1400</span><span>2500 GM</span></div>
+          <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
+            <div id="progBar" class="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-700" style="width:0%"></div>
+          </div>
+        </div>
+        <div id="phases" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4"></div>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-3">
+        <div class="card rounded-2xl p-4">
+          <p class="text-xs text-slate-400">Puzzles resolvidos</p>
+          <p id="statSolved" class="text-2xl font-bold">0</p>
+        </div>
+        <div class="card rounded-2xl p-4">
+          <p class="text-xs text-slate-400">Acurácia</p>
+          <p id="statAcc" class="text-2xl font-bold">0%</p>
+        </div>
+        <div class="card rounded-2xl p-4">
+          <p class="text-xs text-slate-400">Fase atual</p>
+          <p id="statPhase" class="text-2xl font-bold">Fundamentos</p>
+        </div>
+      </div>
+
+      <div class="card rounded-2xl p-5">
+        <h3 class="font-bold mb-3">Plano diário — escolha seu tempo</h3>
+        <div class="grid sm:grid-cols-3 gap-3">
+          <button data-plan="30" class="planBtn card rounded-xl p-4 text-left hover:border-amber-500/50 border border-transparent">
+            <p class="font-semibold text-amber-400">30 min</p>
+            <p class="text-xs text-slate-400 mt-1">15 táticas • 10 finais • 5 abertura</p>
+          </button>
+          <button data-plan="60" class="planBtn card rounded-xl p-4 text-left hover:border-amber-500/50 border border-transparent ring-1 ring-amber-500/30">
+            <p class="font-semibold text-amber-400">60 min</p>
+            <p class="text-xs text-slate-400 mt-1">25 táticas • 15 meio-jogo • 10 finais • 10 abertura</p>
+          </button>
+          <button data-plan="90" class="planBtn card rounded-xl p-4 text-left hover:border-amber-500/50 border border-transparent">
+            <p class="font-semibold text-amber-400">90 min</p>
+            <p class="text-xs text-slate-400 mt-1">30 táticas • 20 cálculo • 20 meio-jogo • 20 estudo</p>
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3">Dica de GM: consistência > maratona. Treine todo dia.</p>
+      </div>
+    </section>
+
+    <!-- TÁTICAS -->
+    <section id="view-taticas" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold">Táticas</h2>
+        <div class="text-xs px-2 py-1 rounded bg-slate-800"><span id="tacTheme">—</span> • <span id="tacRating">1500</span></div>
+      </div>
+      <div class="card rounded-2xl p-4">
+        <div class="board-wrap"><div id="boardTactics" style="width:100%"></div></div>
+        <p id="tacDesc" class="text-sm text-slate-300 mt-3 text-center">Encontre o melhor lance.</p>
+        <div class="flex gap-2 mt-3">
+          <button id="tacHint" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm">Dica</button>
+          <button id="tacSol" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm">Solução</button>
+          <button id="tacNext" class="flex-1 py-2 rounded-xl bg-amber-500 text-slate-900 font-semibold hover:bg-amber-400 text-sm">Próximo</button>
+        </div>
+        <p id="tacFeedback" class="text-center text-sm mt-2 h-5"></p>
+      </div>
+    </section>
+
+    <!-- ABERTURAS -->
+    <section id="view-aberturas" class="hidden space-y-4">
+      <h2 class="text-xl font-bold">Aberturas</h2>
+      <div class="card rounded-2xl p-4">
+        <select id="openingSel" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm mb-3">
+          <option value="italiana">Brancas: Italiana</option>
+          <option value="dama">Brancas: Gambito da Dama</option>
+          <option value="siciliana">Pretas: Siciliana Najdorf</option>
+          <option value="francesa">Pretas: Francesa</option>
+        </select>
+        <div class="board-wrap"><div id="boardOpen" style="width:100%"></div></div>
+        <div class="mt-3 p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+          <p class="text-xs text-amber-400 font-semibold" id="openTitle">Ideia</p>
+          <p id="openComment" class="text-sm mt-1">Jogue o lance principal.</p>
+          <p class="text-[11px] text-slate-500 mt-2" id="openError">Erro comum de 1400: jogar rápido sem plano.</p>
+        </div>
+        <button id="openReset" class="mt-3 w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm">Reiniciar repertório</button>
+      </div>
+    </section>
+
+    <!-- MEIO-JOGO -->
+    <section id="view-meiojogo" class="hidden space-y-4">
+      <h2 class="text-xl font-bold">Meio-Jogo</h2>
+      <div id="mgList" class="space-y-3"></div>
+      <div class="card rounded-2xl p-4 hidden" id="mgBoardWrap">
+        <div class="board-wrap"><div id="boardMid" style="width:100%"></div></div>
+        <button id="mgClose" class="mt-3 w-full py-2 rounded-xl bg-slate-800 text-sm">Fechar exemplo</button>
+      </div>
+    </section>
+
+    <!-- FINAIS -->
+    <section id="view-finais" class="hidden space-y-4">
+      <h2 class="text-xl font-bold">Finais Essenciais</h2>
+      <div class="grid sm:grid-cols-2 gap-3" id="endList"></div>
+      <div class="card rounded-2xl p-4">
+        <div class="board-wrap"><div id="boardEnd" style="width:100%"></div></div>
+        <p id="endDesc" class="text-sm text-slate-300 mt-2 text-center">Jogue contra si mesmo. Pratique a técnica.</p>
+      </div>
+    </section>
+
+    <!-- CÁLCULO -->
+    <section id="view-calculo" class="hidden space-y-4">
+      <h2 class="text-xl font-bold">Cálculo & Visualização</h2>
+      <div class="card rounded-2xl p-4">
+        <p class="text-sm text-slate-300" id="calcDesc">Memorize a posição, depois jogue 3 lances de cabeça.</p>
+        <div class="board-wrap mt-3"><div id="boardCalc" style="width:100%"></div></div>
+        <div class="flex gap-2 mt-3">
+          <button id="calcHide" class="flex-1 py-2 rounded-xl bg-amber-500 text-slate-900 font-semibold text-sm">Esconder peças</button>
+          <button id="calcShow" class="flex-1 py-2 rounded-xl bg-slate-800 text-sm">Mostrar</button>
+          <button id="calcNext" class="flex-1 py-2 rounded-xl bg-slate-800 text-sm">Próximo</button>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2">Erro comum de 1400: calcular só 1 lance. GMs visualizam 3-5.</p>
+      </div>
+    </section>
+
+    <!-- ANÁLISE -->
+    <section id="view-analise" class="hidden space-y-4">
+      <h2 class="text-xl font-bold">Análise</h2>
+      <div class="card rounded-2xl p-4">
+        <textarea id="pgnInput" class="w-full h-24 bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs" placeholder="Cole seu PGN aqui...">1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5</textarea>
+        <div class="flex gap-2 mt-2">
+          <button id="pgnLoad" class="flex-1 py-2 rounded-xl bg-amber-500 text-slate-900 font-semibold text-sm">Carregar</button>
+          <button id="pgnPrev" class="px-3 py-2 rounded-xl bg-slate-800 text-sm">◀</button>
+          <button id="pgnNext" class="px-3 py-2 rounded-xl bg-slate-800 text-sm">▶</button>
+        </div>
+        <div class="board-wrap mt-3"><div id="boardAna" style="width:100%"></div></div>
+        <div class="flex justify-between text-xs mt-2">
+          <span id="anaMove">—</span>
+          <span id="anaEval" class="text-amber-400">Material: 0.0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BIBLIOTECA -->
+    <section id="view-biblioteca" class="hidden space-y-4">
+      <h2 class="text-xl font-bold">Biblioteca GM</h2>
+      <div id="libList" class="space-y-2"></div>
+      <div class="card rounded-2xl p-4 mt-4">
+        <h3 class="font-bold mb-2">Rotina por nível</h3>
+        <p id="routineText" class="text-sm text-slate-300"></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="fixed bottom-0 inset-x-0 z-30 bg-slate-950/90 backdrop-blur border-t border-slate-800">
+    <div class="max-w-[960px] mx-auto grid grid-cols-8 gap-1 px-2 py-2 scrollbar-hide overflow-x-auto">
+      <button data-view="dashboard" class="nav-btn active flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">🏠</span>Home</button>
+      <button data-view="taticas" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">♞</span>Táticas</button>
+      <button data-view="aberturas" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">📖</span>Aberturas</button>
+      <button data-view="meiojogo" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">🧠</span>Meio</button>
+      <button data-view="finais" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">👑</span>Finais</button>
+      <button data-view="calculo" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">👁️</span>Cálculo</button>
+      <button data-view="analise" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">🔍</span>Análise</button>
+      <button data-view="biblioteca" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-[10px]"><span class="text-lg">📚</span>GM</button>
+    </div>
+  </nav>
+</div>
+
+<script>
+// ===== DADOS E ESTADO =====
+const phases = [
+  {r1:1400,r2:1600,name:'Fundamentos Táticos',desc:'Mate em 1-2, garfos, cravadas'},
+  {r1:1600,r2:1800,name:'Estratégia Posicional',desc:'Casas fracas, planos'},
+  {r1:1800,r2:2000,name:'Aberturas e Planos',desc:'Repertório sólido'},
+  {r1:2000,r2:2200,name:'Cálculo Avançado',desc:'Visualização 4-5 lances'},
+  {r1:2200,r2:2400,name:'Mestre',desc:'Profilaxia, técnica'},
+  {r1:2400,r2:2500,name:'GM',desc:'Conversão e consistência'},
+];
+let state = JSON.parse(localStorage.getItem('gmpath')||'{}');
+state.rating = state.rating||1400;
+state.solved = state.solved||0;
+state.correct = state.correct||0;
+state.tacIndex = state.tacIndex||0;
+state.lessons = state.lessons||{};
+
+function save(){localStorage.setItem('gmpath',JSON.stringify(state));updateDash()}
+
+// ===== DASHBOARD =====
+function updateDash(){
+  document.getElementById('ratingBadge').textContent = state.rating;
+  const pct = Math.max(0,Math.min(100, (state.rating-1400)/(1100)*100));
+  document.getElementById('progBar').style.width = pct+'%';
+  document.getElementById('statSolved').textContent = state.solved;
+  const acc = state.solved?Math.round(state.correct/state.solved*100):0;
+  document.getElementById('statAcc').textContent = acc+'%';
+  const ph = phases.find(p=>state.rating>=p.r1 && state.rating<p.r2)||phases[5];
+  document.getElementById('statPhase').textContent = ph.name.split(' ')[0];
+  const wrap = document.getElementById('phases'); wrap.innerHTML='';
+  phases.forEach(p=>{
+    const active = state.rating>=p.r1 && state.rating<p.r2;
+    wrap.innerHTML+=`<div class="p-2.5 rounded-xl border ${active?'border-amber-500/50 bg-amber-500/10':'border-slate-800 bg-slate-900/50'}">
+      <p class="text-[11px] text-slate-400">${p.r1}-${p.r2}</p>
+      <p class="text-sm font-semibold ${active?'text-amber-400':''}">${p.name}</p>
+    </div>`
+  });
+  document.getElementById('routineText').textContent = getRoutine();
+}
+document.getElementById('editRating').onclick=()=>{
+  const r = prompt('Seu rating atual?', state.rating);
+  if(r){state.rating = Math.max(1000,Math.min(2600,parseInt(r))); save()}
+};
+document.querySelectorAll('.planBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.planBtn').forEach(x=>x.classList.remove('ring-1'));b.classList.add('ring-1','ring-amber-500/30')})
+
+// ===== TÁTICAS - 30 puzzles curados =====
+const basePuzzles = [
+ {fen:"7k/5Q2/6K1/8/8/8 w - - 0 1",sol:["Qg7#"],theme:"Mate em 1",hint:"Dama apoia o rei",desc:"Mate básico"},
+ {fen:"6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1",sol:["Re8#"],theme:"Mate em 1",hint:"Explora 8ª fileira",desc:"Torre no corredor"},
+ {fen:"2q3k1/8/2N5/8/8/4K3 w - - 0 1",sol:["Ne7+","Kf8","Nxc8"],theme:"Garfo",hint:"Cheque primeiro",desc:"Garfo de cavalo"},
+ {fen:"4k1q1/8/8/3N4/8/8/8/4K3 w - - 0 1",sol:["Nf6+","Ke7","Nxg8"],theme:"Garfo",hint:"Rei e dama na mesma cor",desc:"Cavalo predador"},
+ {fen:"r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",sol:["Bxf7+","Kxf7","Nxe5+"],theme:"Sacrifício",hint:"Ponto f7",desc:"Ataque Greco"},
+ {fen:"r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 0 4",sol:["Nxe5"],theme:"Garfo",hint:"Peão desprotegido",desc:"Tática central"},
+ {fen:"1k6/1Q6/1K6/8/8/8/8/8 w - - 0 1",sol:["Qb7#"],theme:"Mate em 1",hint:"Rei apoia",desc:"Coordenação"},
+ {fen:"4k3/8/8/2n1n3/3P4/8/8/4K3 w - - 0 1",sol:["dxc5"],theme:"Peão",hint:"Peão ataca dois",desc:"Garfo de peão"},
+ {fen:"1k1r4/8/8/8/8/1K1R4 w - - 0 1",sol:["Rd8+","Rxd8","Rxd8+"],theme:"Raio-X",hint:"Alinhe torres",desc:"Cravada absoluta"},
+ {fen:"6k1/5ppp/7Q/8/8/8/5PPP/6K1 w - - 0 1",sol:["Qh7#"],theme:"Mate em 1",hint:"Canto",desc:"Mate árabe"},
+];
+const puzzles = Array.from({length:30},(_,i)=>({...basePuzzles[i%10],rating:1400+i*27,id:i}));
+let tacGame, boardTactics, tacPly=0, currentPuzzle;
+function loadTactic(){
+  currentPuzzle = puzzles[state.tacIndex%puzzles.length];
+  tacGame = new Chess(currentPuzzle.fen);
+  boardTactics.position(currentPuzzle.fen);
+  tacPly=0;
+  document.getElementById('tacTheme').textContent=currentPuzzle.theme;
+  document.getElementById('tacRating').textContent=currentPuzzle.rating;
+  document.getElementById('tacDesc').textContent=currentPuzzle.desc;
+  document.getElementById('tacFeedback').textContent='';
+}
+function onTacDrop(src,tgt){
+  const mv = tacGame.move({from:src,to:tgt,promotion:'q'});
+  if(!mv) return 'snapback';
+  const expected = currentPuzzle.sol[tacPly];
+  if(mv.san===expected || mv.san.replace('+','')===expected.replace('+','') || mv.san.replace('#','')===expected.replace('#','')){
+    tacPly++;
+    if(tacPly>=currentPuzzle.sol.length){
+      document.getElementById('tacFeedback').textContent='✓ Correto! +3 rating';
+      document.getElementById('tacFeedback').className='text-center text-sm mt-2 h-5 text-emerald-400';
+      state.solved++; state.correct++; state.rating=Math.min(2500,state.rating+3); save();
+      setTimeout(nextTac,900);
+    } else {
+      // jogada do oponente automática
+      const opp = currentPuzzle.sol[tacPly];
+      setTimeout(()=>{tacGame.move(opp); boardTactics.position(tacGame.fen()); tacPly++},400);
+    }
+  }else{
+    document.getElementById('tacFeedback').textContent='✗ Tente de novo. Erro comum de 1400: pressa.';
+    document.getElementById('tacFeedback').className='text-center text-sm mt-2 h-5 text-red-400';
+    state.solved++; state.rating=Math.max(1200,state.rating-2); save();
+    setTimeout(()=>{tacGame.load(currentPuzzle.fen); boardTactics.position(currentPuzzle.fen); tacPly=0},800);
+    return 'snapback';
+  }
+}
+function nextTac(){state.tacIndex++; save(); loadTactic()}
+document.getElementById('tacHint').onclick=()=>{document.getElementById('tacFeedback').textContent='Dica: '+currentPuzzle.hint;document.getElementById('tacFeedback').className='text-center text-sm mt-2 h-5 text-amber-400'};
+document.getElementById('tacSol').onclick=()=>{
+  let i=0; const play=()=>{if(i>=currentPuzzle.sol.length)return; tacGame.move(currentPuzzle.sol[i]); boardTactics.position(tacGame.fen()); i++; setTimeout(play,500)}; tacGame.load(currentPuzzle.fen); play()
+};
+document.getElementById('tacNext').onclick=nextTac;
+
+// ===== ABERTURAS =====
+const openings = {
+ italiana:{name:'Italiana', side:'w', moves:[
+  {san:'e4',c:'Controle o centro imediatamente.'},{san:'e5',o:1,c:'Pretas simétricas'},{san:'Nf3',c:'Desenvolve atacando e5'},{san:'Nc6',o:1},{san:'Bc4',c:'Mira f7 - erro 1400: jogar d4 cedo demais'},{san:'Bc5',o:1},{san:'c3',c:'Ideia GM: preparar d4 forte'},{san:'Nf6',o:1},{san:'d4',c:'Golpe central!'},
+ ]},
+ dama:{name:'Gambito Dama', side:'w', moves:[
+  {san:'d4',c:'Domina centro'},{san:'d5',o:1},{san:'c4',c:'Gambito - luta por d5'},{san:'e6',o:1},{san:'Nc3',c:'Desenvolve'},{san:'Nf6',o:1},{san:'Bg5',c:'Crava cavalo - ideia de troca'}
+ ]},
+ siciliana:{name:'Siciliana Najdorf', side:'b', moves:[
+  {san:'e4',o:1,c:'Brancas ocupam'},{san:'c5',c:'Luta assimétrica por d4'},{san:'Nf3',o:1},{san:'d6',c:'Prepara ...Nf6'},{san:'d4',o:1},{san:'cxd4',c:'Abra a coluna c'},{san:'Nxd4',o:1},{san:'Nf6'},{san:'Nc3',o:1},{san:'a6',c:'Ideia GM: previne Nb5, prepara e5'}
+ ]},
+ francesa:{name:'Francesa', side:'b', moves:[
+  {san:'e4',o:1},{san:'e6',c:'Estrutura sólida'},{san:'d4',o:1},{san:'d5',c:'Contragolpe central'},{san:'Nc3',o:1},{san:'Bb4',c:'Pin - erro 1400: ...dxe4 cedo'},{san:'e5',o:1},{san:'c5',c:'Ataca d4 - plano típico'}
+ ]}
+};
+let openGame, boardOpen, openIdx=0, openKey='italiana';
+function loadOpen(){
+  const o = openings[openKey]; openGame=new Chess(); openIdx=0; boardOpen.position('start');
+  document.getElementById('openComment').textContent='Jogue: '+o.moves[0].san; document.getElementById('openTitle').textContent=o.name;
+}
+function onOpenDrop(s,t){
+  const o = openings[openKey]; const mv = openGame.move({from:s,to:t,promotion:'q'}); if(!mv) return 'snapback';
+  const exp = o.moves[openIdx];
+  if(mv.san!==exp.san){openGame.undo(); return 'snapback'}
+  document.getElementById('openComment').textContent=exp.c||'Bom lance';
+  openIdx++;
+  if(openIdx<o.moves.length && o.moves[openIdx].o){
+    setTimeout(()=>{openGame.move(o.moves[openIdx].san); boardOpen.position(openGame.fen()); document.getElementById('openComment').textContent=o.moves[openIdx].c||''; openIdx++},500)
+  }
+}
+document.getElementById('openingSel').onchange=e=>{openKey=e.target.value; loadOpen()}
+document.getElementById('openReset').onclick=loadOpen;
+
+// ===== MEIO-JOGO =====
+const mgLessons = [
+ {id:'casas',t:'Casas Fracas',c:'Casa que não pode ser defendida por peão. Ocupar com cavalo = +150 elo.',fen:'r1bqkb1r/1ppp1ppp/p1n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5',e:'Cavalo em d5 domina',err:'1400 troca bispo bom por cavalo ruim'},
+ {id:'bispos',t:'Par de Bispos',c:'Em posição aberta, dois bispos > bispo+cavalo.',fen:'4k3/pp3ppp/8/2b5/2B5/8/PP3PPP/4K3 w - - 0 1',e:'Abra diagonais',err:'1400 fecha posição com par'},
+ {id:'isolado',t:'Peão Isolado',c:'Força no ataque, fraqueza no final. Jogue ativo!',fen:'rnbqkb1r/pp3ppp/4pn2/3p4/3P4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 5',e:'d4-d5 é ruptura',err:'1400 defende passivo'},
+ {id:'coluna',t:'Colunas Abertas',c:'Torre na 7ª = pesadelo GM.',fen:'6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1',e:'Dobre torres',err:'1400 troca torres rápido'},
+ {id:'iniciativa',t:'Iniciativa',c:'Não jogue rápido em posições críticas - calcule!',fen:'r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/3P1N2/PPP1NPPP/R1BQK2R w KQ - 0 7',e:'Sacrifício para manter ataque',err:'1400 devolve material por medo'},
+];
+function renderMG(){
+  const wrap=document.getElementById('mgList'); wrap.innerHTML='';
+  mgLessons.forEach(l=>{
+    const done = state.lessons[l.id]==='done';
+    wrap.innerHTML+=`<div class="card rounded-2xl p-4">
+      <div class="flex items-start justify-between gap-3">
+        <div><h4 class="font-semibold">${l.t}</h4><p class="text-sm text-slate-300 mt-1">${l.c}</p><p class="text-[11px] text-red-400/80 mt-1">Erro 1400: ${l.err}</p></div>
+        <button data-id="${l.id}" class="mgBtn px-3 py-1.5 rounded-lg ${done?'bg-emerald-600':'bg-slate-800'} text-xs">${done?'Dominado':'Revisar'}</button>
+      </div>
+      <button data-ex="${l.id}" class="mt-2 text-xs text-amber-400 hover:underline">ver exemplo →</button>
+    </div>`
+  });
+  document.querySelectorAll('.mgBtn').forEach(b=>b.onclick=()=>{state.lessons[b.dataset.id]= state.lessons[b.dataset.id]==='done'?'review':'done'; save(); renderMG()});
+  document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{const l=mgLessons.find(x=>x.id===b.dataset.ex); boardMid.position(l.fen); document.getElementById('mgBoardWrap').classList.remove('hidden')});
+}
+document.getElementById('mgClose').onclick=()=>document.getElementById('mgBoardWrap').classList.add('hidden');
+
+// ===== FINAIS =====
+const endings = [
+ {n:'Oposição',f:'8/8/8/4k3/4P3/4K3/8/8 w - - 0 1',d:'Rei na frente do peão'},
+ {n:'Lucena',f:'8/8/7P/6K1/8/8/6k1/5R2 w - - 0 1',d:'Construa a ponte'},
+ {n:'Philidor',f:'4R3/6kp/8/6p1/6P1/6K1/8/8 b - - 0 1',d:'Defesa com 3ª fileira'},
+ {n:'Torre vs Peão',f:'8/8/5kp1/5p2/5P2/5K1R w - - 0 1',d:'Atividade do rei'},
+ {n:'Bispo cor errada',f:'8/8/4k3/8/6P1/5K1B w - - 0 1',d:'Conheça o empate'},
+ {n:'Quadrado',f:'8/8/8/3k4/8/4P3/8/4K3 w - - 0 1',d:'Regra do quadrado'},
+ {n:'Dois bispos',f:'4k3/8/8/8/5B1B/4K3 w - - 0 1',d:'Mate de bispos'},
+ {n:'Dama vs peão',f:'8/6PK/8/7p/8/8/7k/7Q w - - 0 1',d:'Não afogue'},
+ {n:'Cavalo e peão',f:'8/8/8/4k3/4P3/4N3/8/4K3 w - - 0 1',d:'Cavalo apoia'},
+ {n:'Torre 7ª',f:'5k2/5ppp/8/8/8/8/5PPP/4RK2 w - - 0 1',d:'Torre ativa'},
+ {n:'Triangulação',f:'8/8/8/4k3/8/3pK3/8/8 w - - 0 1',d:'Zugzwang'},
+ {n:'Vancura',f:'8/1k6/8/8/6pP/6P1/6K1/1R6 b - - 0 1',d:'Defesa de torre'},
+];
+function renderEnds(){
+  const w=document.getElementById('endList'); w.innerHTML='';
+  endings.forEach((e,i)=>w.innerHTML+=`<button data-i="${i}" class="card rounded-xl p-3 text-left hover:border-amber-500/40 border-transparent"><p class="font-semibold text-sm">${e.n}</p><p class="text-[11px] text-slate-400">${e.d}</p></button>`);
+  document.querySelectorAll('#endList button').forEach(b=>b.onclick=()=>{const e=endings[b.dataset.i]; boardEnd.position(e.fen); document.getElementById('endDesc').textContent=e.n+' — '+e.d})
+}
+
+// ===== CÁLCULO =====
+const calcEx = [
+ {f:'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',d:'1.e4 e5 2.Cf3 Cc6 3.Bb5'},
+ {f:'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3',d:'Italiana: visualize após 3...Nf6'},
+ {f:'rnbqkb1r/pp2pppp/3p1n2/8/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 3',d:'3 lances no centro'},
+];
+let calcIdx=0;
+function loadCalc(){boardCalc.position(calcEx[calcIdx].f); document.getElementById('calcDesc').textContent=calcEx[calcIdx].d; document.getElementById('boardCalc').parentElement.classList.remove('blind')}
+document.getElementById('calcHide').onclick=()=>document.getElementById('boardCalc').parentElement.classList.add('blind');
+document.getElementById('calcShow').onclick=()=>document.getElementById('boardCalc').parentElement.classList.remove('blind');
+document.getElementById('calcNext').onclick=()=>{calcIdx=(calcIdx+1)%calcEx.length; loadCalc()}
+
+// ===== ANÁLISE =====
+let anaGame=new Chess(), anaMoves=[], anaIdx=0;
+function updateAna(){boardAna.position(anaGame.fen()); document.getElementById('anaMove').textContent=anaMoves[anaIdx-1]||'Início'; const m = calcMaterial(anaGame); document.getElementById('anaEval').textContent='Material: '+(m>0?'+'+m:m)}
+function calcMaterial(g){const v={p:1,n:3,b:3,r:5,q:9}; let s=0; g.board().flat().forEach(p=>{if(p){s+=(p.color==='w'?1:-1)*(v[p.type]||0)}}); return s.toFixed(1)}
+document.getElementById('pgnLoad').onclick=()=>{const pgn=document.getElementById('pgnInput').value; anaGame=new Chess(); if(anaGame.load_pgn(pgn)){anaMoves=anaGame.history(); anaGame.reset(); anaIdx=0; updateAna()}else alert('PGN inválido')}
+document.getElementById('pgnNext').onclick=()=>{if(anaIdx<anaMoves.length){anaGame.move(anaMoves[anaIdx]); anaIdx++; updateAna()}}
+document.getElementById('pgnPrev').onclick=()=>{if(anaIdx>0){anaGame.undo(); anaIdx--; updateAna()}}
+
+// ===== BIBLIOTECA =====
+const principles = [
+ 'Não jogue rápido em posições críticas - respire, calcule 2 candidatos',
+ 'Profilaxia de Petrosian: pergunte "o que ele quer?" antes do seu lance',
+ 'Conversão Capablanca: vantagem = simplifique, troque peças atacantes',
+ 'Dois defeitos não fazem virtude: não crie fraqueza para consertar outra',
+ 'Peão passado deve ser empurrado - especialmente no final',
+ 'Atividade > material em ataque. Sacrifício por iniciativa é GM',
+ 'Pense em lances candidatos, não no primeiro brilhante',
+ 'Melhore sua pior peça - princípio de Steinitz',
+ 'Troque quando melhor, evite quando pior',
+ 'Torre na 7ª fileira vale um peão',
+ 'Cavalo na 6ª apoiado decide jogos',
+ 'Bispo mau? Troque ou abra diagonais',
+ 'Centro fechado = jogue nas alas, centro aberto = peças centrais',
+ 'Não mova mesma peça 3x na abertura sem motivo',
+ 'Rei é peça forte no final - centralize!',
+ 'Calcule checks, capturas e ameaças primeiro',
+ 'Profi­laxia: pare o plano antes que comece',
+ 'Peões não voltam - cada avanço é compromisso',
+ 'Crie duas fraquezas para vencer - princípio de dois frontes',
+ 'Constância vence talento: 60min/dia > 7h no domingo',
+];
+function renderLib(){
+  const w=document.getElementById('libList'); w.innerHTML='';
+  principles.forEach((p,i)=>w.innerHTML+=`<div class="card rounded-xl p-3"><p class="text-[11px] text-amber-400">Princípio ${i+1}</p><p class="text-sm">${p}</p></div>`)
+}
+function getRoutine(){
+  const r=state.rating;
+  if(r<1600) return '30min: 15 táticas (mates), 10 finais (oposição), 5 rever erros';
+  if(r<1800) return '60min: 20 táticas, 15 meio-jogo (casas fracas), 15 finais, 10 aberturas';
+  if(r<2000) return '60min: 25 táticas, 15 cálculo 3 lances, 20 planos de abertura';
+  if(r<2200) return '90min: 30 táticas complexas, 20 análise de partidas, 20 finais técnicos';
+  return '90-120min: estudo profundo, 1 partida lenta/dia + análise GM';
+}
+
+// ===== NAVEGAÇÃO =====
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const v=btn.dataset.view;
+    document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+    document.getElementById('view-'+v).classList.remove('hidden');
+    window.scrollTo(0,0);
+  }
+});
+
+// ===== INICIALIZAÇÃO DOS TABULEIROS =====
+let boardOpen, boardMid, boardEnd, boardCalc, boardAna;
+function initBoards(){
+  const cfg = {draggable:true, pieceTheme:'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/img/chesspieces/wikipedia/{piece}.png', appearSpeed:150};
+  boardTactics = Chessboard('boardTactics',{...cfg,position:'start',onDrop:onTacDrop});
+  boardOpen = Chessboard('boardOpen',{...cfg,position:'start',onDrop:onOpenDrop});
+  boardMid = Chessboard('boardMid',{...cfg,position:'start',draggable:false});
+  boardEnd = Chessboard('boardEnd',{...cfg,position:'8/8/8/8/8/8',onDrop:(s,t)=>{const g=new Chess(boardEnd.fen()+' w - - 0 1'); const m=g.move({from:s,to:t,promotion:'q'}); return m?'':'snapback'}});
+  boardCalc = Chessboard('boardCalc',{...cfg,position:'start'});
+  boardAna = Chessboard('boardAna',{...cfg,position:'start',draggable:false});
+  loadTactic(); loadOpen(); renderMG(); renderEnds(); loadCalc(); renderLib(); updateAna(); updateDash();
+}
+$(document).ready(initBoards);
+
+// ===== PWA: MANIFEST E SERVICE WORKER =====
+(async()=>{
+  function icon(size){
+    const c=document.createElement('canvas'); c.width=c.height=size; const x=c.getContext('2d');
+    x.fillStyle='#0f172a'; x.fillRect(0,0,size,size);
+    x.fillStyle='#f59e0b'; x.beginPath(); x.arc(size/2,size/2,size*0.42,0,Math.PI*2); x.fill();
+    x.fillStyle='#0f172a'; x.font=`${size*0.55}px serif`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('♞',size/2,size*0.58);
+    return c.toDataURL('image/png');
+  }
+  const manifest = {name:'GM Path',short_name:'GM Path',display:'standalone',start_url:'.',theme_color:'#0f172a',background_color:'#0f172a',icons:[
+    {src:icon(192),sizes:'192x192',type:'image/png'},
+    {src:icon(512),sizes:'512x512',type:'image/png'}
+  ]};
+  const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  document.getElementById('manifestLink').href = URL.createObjectURL(blob);
+
+  // Service Worker inline
+  const swCode = `
+    const CACHE='gmpath-v3';
+    const ASSETS=[
+      'https://code.jquery.com/jquery-3.6.0.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css',
+      'https://cdn.tailwindcss.com',
+      'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap',
+      ...['wK','wQ','wR','wB','wN','wP','bK','bQ','bR','bB','bN','bP'].map(p=>'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/img/chesspieces/wikipedia/'+p+'.png')
+    ];
+    self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
+    self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))))});
+    self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{const copy=res.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return res}).catch(()=>caches.match('https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css'))))});
+  `;
+  if('serviceWorker' in navigator){
+    const swBlob = new Blob([swCode],{type:'text/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+  }
+
+  // Install prompt
+  let deferred;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;document.getElementById('installBtn').classList.remove('hidden')});
+  document.getElementById('installBtn').onclick=async()=>{if(deferred){deferred.prompt(); await deferred.userChoice; deferred=null; document.getElementById('installBtn').classList.add('hidden')}};
+})();
+</script>
+</body>
+</html>
